@@ -5,7 +5,6 @@ export default class NotificationMessage {
         this.type = type;
 
         this.render();
-        this.initEventListeners();
     }
 
     getTemplate() {
