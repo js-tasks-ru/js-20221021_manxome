@@ -26,10 +26,8 @@ export default class NotificationMessage {
         const element = document.createElement("div");
         element.innerHTML = this.getTemplate();
         this.element = element.firstElementChild;
-    }
 
-    initEventListeners() {
-      // NOTE: в данном методе добавляем обработчики событий, если они есть
+        this.container = document.body;
     }
 
     remove() {
@@ -40,14 +38,12 @@ export default class NotificationMessage {
         this.remove();
     }
 
-    show(div) {
-        const self = this;
-        const container = div || document.body;
+    show(div = this.container) {
+        if (this.container.querySelector('.notification')) {
+            this.container.querySelector('.notification').remove();
+        }
 
-        container.append(self.element);
-
-        setTimeout(function() {
-            self.remove();
-        }, this.duration);
+        div.append(this.element);
+        setTimeout(() =>  this.remove(), this.duration);
     }
 }

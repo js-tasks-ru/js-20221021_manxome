@@ -13,14 +13,14 @@ export default class ColumnChart {
 
     getTemplate() {
         const linkA = this.link ? `<a href=${this.link} class="column-chart__link">View all</a>` : '';
-        
-        let chartContainer = ``; 
+
+        let chartContainer = ``;
         if (this.data.length === 0) {
             chartContainer = `<img src="./charts-skeleton.svg" alt="No data" >`
         }
 
         const maxData = Math.max(...this.data) || 1;
-        const basis = 50 / maxData;
+        const basis = this.chartHeight / maxData;
 
         return `
             <div class="column-chart ${this.data.length === 0 || !this.params ? " column-chart_loading" : ""}" style="--chart-height:  ${this.chartHeight}">
@@ -53,7 +53,7 @@ export default class ColumnChart {
 
     update(newData) {
         const maxData = Math.max(...newData) || 1;
-        const basis = 50 / maxData;
+        const basis = this.chartHeight / maxData;
         const newDataStr = newData.map(item => {
             return `<div style="--value: ${Math.floor(item * basis)}" data-tooltip="${(item / maxData * 100).toFixed(0)}%"></div>`
         }).join('');
