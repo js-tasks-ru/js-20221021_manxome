@@ -4,56 +4,46 @@ const BACKEND_URL = 'https://course-js.javascript.ru';
 
 export default class ColumnChart {
   element;
+  subElements;
   data;
 
-  constructor({url = '', range = {from: new Date(), to: new Date()}, label = '', link = '', formatHeading = (str => `${str}`)} = {}, value = 0) {
-    this.url = url;
+  constructor({url = '', range = {from: new Date(), to: new Date()}, label = '', link = '', formatHeading = (str => `${str}`)} = {}) {
+    this.url = new URL(url, BACKEND_URL);
     this.range = range;
     this.label = label;
     this.link = link;
     this.formatHeading = formatHeading;
     this.chartHeight = 50;
-    this.value = value;
 
     this.render();
-    this.loadData(BACKEND_URL + '/api/dashboard/' + this.label);
+    this.update(this.range.from, this.range.to);
   }
 
-  loadData(url) {
-    fetchJson(url)
-      .then(data => {
-        this.data = data;
-        this.update(this.range.from, this.range.to);
-      })
+  async loadData(from, to) {
+    this.url.searchParams.set('from', from.toISOString());
+    this.url.searchParams.set('to', to.toISOString());
+    const data = await fetchJson(this.url);
+    return data;
   }
 
-  update(dateFrom, dateTo) {
-    let filteredObject = {};
-    if (dateFrom.getFullYear() === dateTo.getFullYear() && dateFrom.getMonth() === dateTo.getMonth() && dateFrom.getDate() === dateTo.getDate()) {
-      filteredObject = this.data;
-    } else {
-      for (const key in this.data) {
-        if (Date.parse(key) >= dateFrom && Date.parse(key) <= dateTo ) {
-          filteredObject = {...filteredObject, [key]: this.data[key]};
-        }
-      }
-    }
-console.log('filteredObject', filteredObject);
-    const filteredArray = Object.values(filteredObject);
-    const value = filteredArray.reduce((sum, el) => {
-      return sum + el;
-    }, 0);
-    this.getSubElements(this.element).header.innerHTML = this.formatHeading(value);
+  async update(dateFrom, dateTo) {
+    this.element.classList.add('column-chart_loading');
 
-    const maxData = Math.max(...filteredArray) || 1;
-    const basis = this.chartHeight / maxData;
-    const newDataStr = filteredArray.map(item => {
-      return `<div style="--value: ${Math.floor(item * basis)}" data-tooltip="${(item / maxData * 100).toFixed(0)}%"></div>`
-    }).join('');
-    this.getSubElements(this.element).body.innerHTML = newDataStr;
+    const data = await this.loadData(dateFrom, dateTo);
+    this.setNewRange(dateFrom, dateTo);
+
+    this.subElements.header.innerHTML = this.formatHeading(this.getHeader(data));
+    this.subElements.body.innerHTML = this.getBody(data);
+
     this.element.classList.remove('column-chart_loading');
 
-    return filteredObject;
+    this.data = data;
+    return this.data;
+  }
+
+  setNewRange(dateFrom, dateTo) {
+    this.range.from = dateFrom;
+    this.range.to = dateTo;
   }
 
   getSubElements(element) {
@@ -68,6 +58,22 @@ console.log('filteredObject', filteredObject);
     return result;
   }
 
+  getHeader(data) {
+    const valuesSum = Object.values(data).reduce((sum, el) => (sum + el), 0);
+    return valuesSum;
+  }
+
+  getBody(data) {
+    const dataArray = Object.values(data);
+    const maxData = Math.max(...dataArray) || 1;
+    const basis = this.chartHeight / maxData;
+    const newDataStr = dataArray.map(item => {
+        return `<div style="--value: ${Math.floor(item * basis)}" data-tooltip="${(item / maxData * 100).toFixed(0)}%"></div>`
+      }).join('');
+
+    return newDataStr;
+  }
+
   getTemplate() {
     const linkA = this.link ? `<a href=${this.link} class="column-chart__link">View all</a>` : '';
 
@@ -78,7 +84,7 @@ console.log('filteredObject', filteredObject);
                 ${linkA}
               </div>
               <div class="column-chart__container">
-                <div data-element="header" class="column-chart__header">${this.formatHeading(this.value)}</div>
+                <div data-element="header" class="column-chart__header"></div>
                 <div data-element="body" class="column-chart__chart"></div>
               </div>
             </div>
