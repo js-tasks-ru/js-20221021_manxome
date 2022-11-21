@@ -32,7 +32,7 @@ export default class SortableTable {
     if (data.length) {
       this.subElements.loading.remove();
     } else {
-      'по заданному критерию запроса данные отсутствуют'
+      this.subElements.body.insertAdjacentHTML('beforeend', '<p>по заданному критерию запроса данные отсутствуют</p>');
     }
     return data;
   }
@@ -52,7 +52,7 @@ export default class SortableTable {
       }).join('');
 
     if (this.start > this.onPage) {
-     this.subElements.body.insertAdjacentHTML('beforeend', bodyContent);
+      this.subElements.body.insertAdjacentHTML('beforeend', bodyContent);
     } else {
       this.subElements.body.innerHTML = bodyContent;
     }
